@@ -1,12 +1,29 @@
-const x = 100;
-const y = 100;
-const s = 0.3;
-
+//SETUP
 function setup() {
   createCanvas(600, 600);
-  background(255);
+  //framerate(30);
 }
 
+//GAME VARIABLES
+let isGameActive = true;
+let gameState = "start";
+const screenHeight = 600;
+const screenWidth = 600;
+let result;
+let r2d2Landed;
+let landingY = 350;
+
+//R2D2 SETTINGS
+let r2d2Settings = {
+  x: screenWidth / 2,
+  y: 50,
+  velocity: 0.4,
+  acceleration: 0.2,
+};
+let x = 300;
+let y = 300;
+
+//R2D2
 function r2d2(x, y, s) {
   push();
   translate(x * s, y * s);
@@ -27,6 +44,7 @@ function r2d2(x, y, s) {
   pop();
 
   //FLAMES LEFT
+
   push();
   noStroke();
   translate(-115 * s, 260 * s);
@@ -88,8 +106,8 @@ function r2d2(x, y, s) {
 
   push();
   fill(200);
-  translate((x - 250) * s, (y + 130) * s);
-  rect(x * s, y * s, 70 * s, 20 * s, 5 * s);
+  translate((x - 150) * s, (y + 230) * s);
+  rect(0, 0, 70 * s, 20 * s, 5 * s);
   pop();
 
   push();
@@ -106,8 +124,8 @@ function r2d2(x, y, s) {
 
   push();
   fill(200);
-  translate((x - 10) * s, (y + 130) * s);
-  rect(x * s, y * s, 70 * s, 20 * s, 5 * s);
+  translate((x + 90) * s, (y + 230) * s);
+  rect(0, 0, 70 * s, 20 * s, 5 * s);
   pop();
 
   push();
@@ -414,8 +432,11 @@ function r2d2(x, y, s) {
   pop();
 }
 
+//FUEL
+let fuel = 150;
+let fuelUsageSpeed = 2;
+
 function startScreen() {
-  background(255, 0, 0);
   translate(0, -y);
   push();
   fill(0);
@@ -426,38 +447,27 @@ function startScreen() {
   translate(x + 40, y + 100);
   fill(230);
   textSize(20);
-  text("Click to start", x, y);
+  text("Click to start", screenWidth / 2, screenHeight / 2);
   pop();
-
-  if (
-    mouseIsPressed === true &&
-    mouseX >= 200 &&
-    mouseX <= 390 &&
-    mouseY >= 450 &&
-    mouseY <= 635
-  ) {
-    state = "game";
-  }
 }
 
-function gameScreen() {
-  background(0, 255, 0);
+function gameScreen() {}
 
-  if (
-    mouseIsPressed === true &&
-    mouseX >= 200 &&
-    mouseX <= 390 &&
-    mouseY >= 350 &&
-    mouseY <= 435
-  ) {
-    state = "result";
-  }
+//------Game won
+function gameWon() {
+  push();
+  fill(255, 255, 255);
+  textSize(30);
+  textFont();
+  textAlign(CENTER);
+  text("YOU LANDED!", screenWidth / 2, screenHeight / 3);
+  pop();
 }
 
 function resultScreen() {
   noStroke();
-  background(85, 13, 179);
 
+  //RESTART BUTTON
   push();
   fill(30);
   translate(x, y + 55);
@@ -471,74 +481,122 @@ function resultScreen() {
   pop();
 
   push();
-  translate(x - 170, x - 20);
-  fill(255);
-  textSize(90);
-  text("GAME OVER", x, y);
-  pop();
-
-  push();
   translate(x + 60, y + 100);
   fill(230);
   textSize(20);
-  text("Restart", x, y);
+  text("Restart", screenWidth / 2, screenHeight / 2);
   pop();
 
-  if (
-    mouseIsPressed === true &&
-    mouseX >= 200 &&
-    mouseX <= 390 &&
-    mouseY >= 255 &&
-    mouseY <= 335
-  ) {
-    state = "start";
-  }
+  //EXIT BUTTON
+  push();
+  fill(30);
+  translate(x + 10, y + 255);
+  rect(x, y, 160, 80, 30);
+  pop();
+
+  push();
+  fill(20);
+  translate(x + 15, y + 260);
+  rect(x, y, 150, 70, 30);
+  pop();
+
+  push();
+  translate(x + 70, y + 300);
+  fill(230);
+  textSize(20);
+  text("EXIT", screenWidth / 2, screenHeight / 2);
+  pop();
+
+  //GAME OVER TEXT
+  push();
+  translate(x - 170, y - 120);
+  fill(255);
+  textSize(90);
+  text("GAME OVER", screenWidth / 2, screenHeight / 2);
+  pop();
 }
 
-let state = "start";
-
+//DRAW FUNCTION
 function draw() {
   background(255);
 
-  if (state === "start") {
-    startScreen();
-  } else if (state === "game") {
-    gameScreen();
-  } else if (state === "result") {
-    resultScreen();
+  if (gameState === "start") {
+    background(255, 0, 0);
+    if (keyIsPressed === true && keyCode === 32) {
+      gameState = "game";
+    }
+  } else if (gameState === "game") {
+    background(0, 255, 0);
+
+    if (isGameActive) {
+      //gravity
+      r2d2Settings.y = r2d2Settings.y + r2d2Settings.velocity;
+      r2d2Settings.velocity = r2d2Settings.velocity + r2d2Settings.acceleration;
+
+      //ground stop
+      if (r2d2Settings.y > landingY && r2d2Settings.velocity > 1.5) {
+        gameOver();
+        result = "too bad, you crashed";
+      }
+
+      //EXPLOSION EFFECT
+      r2d2Landed = false;
+      isGameActive = false;
+      gameState = "result";
+    } else if (r2d2Settings.y > landingY && r2d2Settings.velocity <= 1.5) {
+      gameWon();
+      result = "r2d2 made it alive";
+      r2d2Landed = true;
+      isGameActive = false;
+      gameState = "result";
+    }
+    //THRUST MECHANICS
+    let thrustAcceleration = 0.4;
+
+    if (keyIsDown(32)) {
+      r2d2Settings.velocity = r2d2Settings.velocity - thrustAcceleration;
+      console.log(r2d2Settings.y);
+      console.log(r2d2Settings.acceleration);
+      fuel = fuel - fuelUsageSpeed;
+    }
+
+    //R2D2
+    r2d2(
+      r2d2Settings.x - 40 * r2d2Settings.size,
+      r2d2Settings.y,
+      r2d2Settings.size
+    );
+
+    if (fuel === 0) {
+      r2d2Landed = false;
+      gameState = "result";
+      isGameActive = false;
+      result = "you have no power left, r2d2 dies";
+      //EXPLOSION EFFECT
+    }
+  } else if (gameState === "result") {
+    background(0, 0, 255);
+
+    if (r2d2Landed === true) {
+      r2d2(
+        r2d2Settings.x - 40 * r2d2Settings.size,
+        r2d2Settings.y,
+        r2d2Settings.size
+      );
+    }
+
+    // Resetting variables & consts
+    if (keyIsPressed === true && keyCode === 32) {
+      r2d2Settings.x = screenWidth / 2;
+      r2d2Settings.y = 50;
+      r2d2Settings.size = 0.7;
+      r2d2Settings.velocity = 0.5;
+      r2d2Settings.acceleration = 0.16;
+
+      fuel = 150;
+
+      gameState = "start";
+      isGameActive = true;
+    }
   }
 }
-
-//BUTTON CLICK LOSING SCREEN
-
-/*function mouseClicked() {
-  if (
-    state === "start" &&
-    mouseIsPressed == true &&
-    mouseX >= 200 &&
-    mouseX <= 390 &&
-    mouseY >= 150 &&
-    mouseY <= 235
-  ) {
-    state = "game";
-  } else if (
-    state === "game" &&
-    mouseIsPressed == true &&
-    mouseX >= 200 &&
-    mouseX <= 390 &&
-    mouseY >= 150 &&
-    mouseY <= 235
-  ) {
-    state = "result";
-  } else if (
-    state === "result" &&
-    mouseIsPressed == true &&
-    mouseX >= 200 &&
-    mouseX <= 390 &&
-    mouseY >= 150 &&
-    mouseY <= 235
-  ) {
-    state = "start";
-  }
-}
-*/
