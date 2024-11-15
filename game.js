@@ -1,27 +1,24 @@
 //SETUP
 function setup() {
   createCanvas(600, 600);
-  //framerate(30);
+  frameRate(30);
 }
 
 //GAME VARIABLES
 let isGameActive = true;
 let gameState = "start";
+//let rocketLanded;
+//let landingY = 350;
 const screenHeight = 600;
 const screenWidth = 600;
-let result;
-let r2d2Landed;
-let landingY = 350;
 
-//R2D2 SETTINGS
 let r2d2Settings = {
-  x: screenWidth / 2,
-  y: 50,
+  r2d2X: screenWidth / 2,
+  r2d2Y: screenHeight / 3,
+  s: 0.5,
   velocity: 0.4,
   acceleration: 0.2,
 };
-let x = 300;
-let y = 300;
 
 //R2D2
 function r2d2(x, y, s) {
@@ -432,28 +429,31 @@ function r2d2(x, y, s) {
   pop();
 }
 
-//FUEL
-let fuel = 150;
-let fuelUsageSpeed = 2;
-
 function startScreen() {
-  translate(0, -y);
+  background(87, 13, 176);
   push();
-  fill(0);
-  translate(x + 20, y + 60);
-  rect(x, y, 150, 70, 30);
-  pop();
-  push();
-  translate(x + 40, y + 100);
+  translate(0, 150);
   fill(230);
   textSize(20);
-  text("Click to start", screenWidth / 2, screenHeight / 2);
+  textAlign(CENTER);
+  text("Click to start", screenWidth / 2, screenHeight / 3);
   pop();
+
+  /*if (
+    mouseX >= rectX &&
+    mouseX <= rectX + rectWidth &&
+    mouseY >= rectY &&
+    mouseY <= rectY + rectHeight
+  ){
+
+  }*/
 }
 
-function gameScreen() {}
+function gameScreen() {
+  background(0, 255, 0);
+  r2d2(r2d2Settings.r2d2X, r2d2Settings.r2d2Y, r2d2Settings.s);
+}
 
-//------Game won
 function gameWon() {
   push();
   fill(255, 255, 255);
@@ -468,135 +468,94 @@ function resultScreen() {
   noStroke();
 
   //RESTART BUTTON
-  push();
-  fill(30);
-  translate(x, y + 55);
-  rect(x, y, 190, 80, 30);
-  pop();
 
   push();
-  fill(20);
-  translate(x + 5, y + 60);
-  rect(x, y, 180, 70, 30);
-  pop();
-
-  push();
-  translate(x + 60, y + 100);
   fill(230);
+  translate(0, -40);
+  textAlign(CENTER);
   textSize(20);
   text("Restart", screenWidth / 2, screenHeight / 2);
   pop();
 
   //EXIT BUTTON
-  push();
-  fill(30);
-  translate(x + 10, y + 255);
-  rect(x, y, 160, 80, 30);
-  pop();
 
   push();
-  fill(20);
-  translate(x + 15, y + 260);
-  rect(x, y, 150, 70, 30);
-  pop();
-
-  push();
-  translate(x + 70, y + 300);
+  translate(0, 110);
   fill(230);
+  textAlign(CENTER);
   textSize(20);
-  text("EXIT", screenWidth / 2, screenHeight / 2);
+  text("EXIT", screenWidth / 2, screenHeight / 3);
   pop();
 
   //GAME OVER TEXT
   push();
-  translate(x - 170, y - 120);
+  translate(0, -100);
   fill(255);
+  textAlign(CENTER);
   textSize(90);
-  text("GAME OVER", screenWidth / 2, screenHeight / 2);
+  text("GAME OVER", screenWidth / 2, screenHeight / 3);
   pop();
 }
 
-//DRAW FUNCTION
 function draw() {
-  background(255);
-
+  //GAME STATES
   if (gameState === "start") {
-    background(255, 0, 0);
-    if (keyIsPressed === true && keyCode === 32) {
+    startScreen();
+  } else if (gameState === "game") {
+    gameScreen();
+  } else if (gameState === "result") {
+    resultScreen();
+  } else if (gameState === "Won") {
+    gameWon();
+  }
+
+  //BUTTONS
+  if (mouseIsPressed) {
+    if (mouseX >= 245 && mouseX <= 355 && mouseY >= 335 && mouseY <= 350) {
       gameState = "game";
     }
-  } else if (gameState === "game") {
-    background(0, 255, 0);
+  }
 
-    if (isGameActive) {
-      //gravity
-      r2d2Settings.y = r2d2Settings.y + r2d2Settings.velocity;
-      r2d2Settings.velocity = r2d2Settings.velocity + r2d2Settings.acceleration;
+  if (mouseIsPressed) {
+    if (mouseX >= 280 && mouseX <= 320 && mouseY >= 295 && mouseY <= 310) {
+      gameState = "start";
+    }
+  }
 
-      //ground stop
-      if (r2d2Settings.y > landingY && r2d2Settings.velocity > 1.5) {
-        gameOver();
-        result = "too bad, you crashed";
+  if (mouseIsPressed) {
+    if (mouseX >= 270 && mouseX <= 335 && mouseY >= 245 && mouseY <= 260) {
+      gameState = "game";
+    }
+  }
+
+  /*if (keyIsPressed === true && keyCode === 32) {
+      gameState = "game";
+    }*/
+
+  if (isGameActive) {
+    if (gameState === "game") {
+      r2d2Settings.acceleration += 0.1;
+      if (keyIsDown(32)) {
+        r2d2Settings.velocity -= 0.1;
       }
 
-      //EXPLOSION EFFECT
-      r2d2Landed = false;
-      isGameActive = false;
-      gameState = "result";
-    } else if (r2d2Settings.y > landingY && r2d2Settings.velocity <= 1.5) {
-      gameWon();
-      result = "r2d2 made it alive";
-      r2d2Landed = true;
-      isGameActive = false;
-      gameState = "result";
-    }
-    //THRUST MECHANICS
-    let thrustAcceleration = 0.4;
+      r2d2Settings.r2d2Y += r2d2Settings.velocity;
+      r2d2Settings.velocity = r2d2Settings.acceleration;
+      if (r2d2Settings.r2d2Y > 600) {
+        if (r2d2Settings.velocity > 1.5) {
+          gameState = "result";
+          r2d2Settings.r2d2Y = 80;
+          r2d2Settings.velocity = 0.1;
+          r2d2Settings.acceleration = 0;
+        } else if (r2d2Settings.velocity <= 1.5) {
+          gameState = "won";
 
-    if (keyIsDown(32)) {
-      r2d2Settings.velocity = r2d2Settings.velocity - thrustAcceleration;
-      console.log(r2d2Settings.y);
-      console.log(r2d2Settings.acceleration);
-      fuel = fuel - fuelUsageSpeed;
-    }
-
-    //R2D2
-    r2d2(
-      r2d2Settings.x - 40 * r2d2Settings.size,
-      r2d2Settings.y,
-      r2d2Settings.size
-    );
-
-    if (fuel === 0) {
-      r2d2Landed = false;
-      gameState = "result";
-      isGameActive = false;
-      result = "you have no power left, r2d2 dies";
-      //EXPLOSION EFFECT
-    }
-  } else if (gameState === "result") {
-    background(0, 0, 255);
-
-    if (r2d2Landed === true) {
-      r2d2(
-        r2d2Settings.x - 40 * r2d2Settings.size,
-        r2d2Settings.y,
-        r2d2Settings.size
-      );
-    }
-
-    // Resetting variables & consts
-    if (keyIsPressed === true && keyCode === 32) {
-      r2d2Settings.x = screenWidth / 2;
-      r2d2Settings.y = 50;
-      r2d2Settings.size = 0.7;
-      r2d2Settings.velocity = 0.5;
-      r2d2Settings.acceleration = 0.16;
-
-      fuel = 150;
-
-      gameState = "start";
-      isGameActive = true;
+          //result = "r2d2 made it alive";
+          //r2d2Landed = true;
+          //isGameActive = false;
+          //gameState = "result";
+        }
+      }
     }
   }
 }
