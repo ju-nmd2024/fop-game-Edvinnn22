@@ -3,7 +3,7 @@ function setup() {
 }
 
 //GAME VARIABLES
-let gameState = "gameWon";
+let gameState = "start";
 let starX = [];
 let starY = [];
 let starAlpha = [];
